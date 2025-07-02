@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask App</title>
+</head>
+<body>
+    <h1>Welcome to Flask</h1>
+    <p>This is a basic template rendering example.</p>
+
+    <div>
+        <h2>Files:</h2>
+        <table>
+            <thead></thead>
+            {% for item in data %}
+                <tr>
+                    <td>{{item["name"]}}</td>
+                    <td>{{item["extension"]}}</td>
+                    <td>{{item["size"]}}</td>
+                    <td>{{item["path"]}}</td>
+                    <td>{{item["created_at"]}}</td>
+                    <td>{{item["updated_at"]}}</td>
+                    <td>{{item["comment"]}}</td>
+                    <td><button type="button" value={{item["id"]}}>Редактировать</button>></td>
+                    <td><button type="button" value={{item["id"]}}>Удалить</button>></td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div>
+        <form action="http://127.0.0.1:5000/api/get" method="post">
+            <h2>Find the file:</h2>
+            <p>Filename:<input type="text" name="filename"></p>
+            <p>Path: files\<input type="text" name="path"></p>
+            <input type="submit" value="submit">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/getByPath" method="post">
+            <h2>Find the files by path:</h2>
+            <p>Path: files\<input type="text" name="path"></p>
+            <input type="submit" value="submit">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/getAll" method="get">
+            <h2>Get all files:</h2>
+            <input type="submit" value="Get!">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/add" method="POST" enctype="multipart/form-data">
+            <h2>Add the file:</h2>
+            <input type="file" name="file">
+            <p>Path: files\<input type="text" name="path"></p>
+            <p>Comment:<input type="text" name="comment"></p>
+            <input type="submit">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/edit" method="post">
+            <h2>Edit the file:</h2>
+            <p>Id:<input type="number" name="id"></p>
+            <p>Name:<input type="text" name="name"></p>
+            <p>Path: files\<input type="text" name="path"></p>
+            <p>Comment:<input type="text" name="comment"></p>
+            <input type="submit" value="submit">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/delete" method="post">
+            <h2>Delete the file:</h2>
+            <p>Id:<input type="number" name="id"></p>
+            <input type="submit" value="submit">
+        </form>
+    </div>
+    <div>
+        <form action="http://127.0.0.1:5000/api/download" method="post">
+            <h2>Download the file:</h2>
+            <p>Id:<input type="number" name="id"></p>
+            <input type="submit" value="Download">
+        </form>
+    </div>
+</body>
+</html>
