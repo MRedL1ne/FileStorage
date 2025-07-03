@@ -1,44 +1,63 @@
 import os
 import shutil
-from datetime import datetime
 import flask
+from datetime import datetime
 from flask import Blueprint, jsonify, request
 from dbModule.models import File
-from dbModule.validateForms import PathForm, EditForm
+from dbModule.validateForms import IdForm, PathForm, EditForm
 from config import filedir
 from . import db
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
-@api_bp.route("/get", methods = ['POST'])
+@api_bp.route("/get", methods = ['POST','GET'])
 def getFile():
     # Получение id из запроса
-    id = request.form["id"]
+    if request.method == "GET":
+        id = request.args.get("id")
+        idForm = IdForm(request.args)
+    else:
+        id = request.form.get("id")
+        idForm = IdForm(request.form)
 
-    # Нахождение нужного файла (по id)
-    file = (db.session.query(File).filter(File.id == id)).first()
-    if file:
-        return jsonify({
-            "status": "ok",
-            "data": file.getData()
-        })
+    # Проверка корректности id
+    if idForm.validate():
+        # Нахождение нужного файла (по id)
+        file = (db.session.query(File).filter(File.id == id)).first()
+        if file:
+            return jsonify({
+                "status": "ok",
+                "data": file.getData()
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "msg": "Wrong id!"
+            })
     else:
         return jsonify({
-            "status": "error",
-            "msg": "Wrong id!"
-        })
+        "status": "error",
+        "errors": idForm.errors
+    })
 
-@api_bp.route("/getByPath", methods=['POST'])
+@api_bp.route("/getByPath", methods=['POST','GET'])
 def getByPathFiles():
+    # Получение данных из запроса
+    if request.method == "GET":
+        pathForm = PathForm(request.args)
+        subcheck = request.args.get("subcheck")
+        if subcheck and subcheck.lower() == "false":
+            subcheck = False
+    else:
+        pathForm = PathForm(request.form)
+        subcheck = request.form.get("subcheck")
+
     # Проверка корректности пути
-    pathForm = PathForm(request.form)
     if pathForm.validate():
-        # Получение данных из запроса
-        checkSub = request.form.get("checkSub")
         path = f"{filedir}\\{pathForm.path.data}".lower()
 
         # Нахождение совпадений пути в БД
-        if checkSub:
+        if subcheck:
             path = path.replace("\\", "\\\\")
             files = db.session.query(File).filter(File.path.startswith(path))
         else:
@@ -62,7 +81,7 @@ def getByPathFiles():
     else:
         return jsonify({
             "status": "error",
-            "msg": "Incorrect form!"
+            "errors": pathForm.errors
         })
 
 @api_bp.route("/getAll")
@@ -78,6 +97,8 @@ def getAllFiles():
 
 @api_bp.route("/add", methods=['POST'])
 def addFile():
+    path = request.args.get("path")
+
     # Проверка корректности пути
     pathForm = PathForm(request.form)
     if pathForm.validate():
@@ -127,16 +148,22 @@ def addFile():
         "msg": "Incorrect form!"
     })
 
-@api_bp.route("/edit", methods=['POST'])
+@api_bp.route("/edit", methods=['POST','GET'])
 def editFile():
-    # Проверка корректности формы
-    editForm = EditForm(request.form)
-    if editForm.validate():
-        # Получение данных из запроса
+    # Получение данных из запроса
+    if request.method == "GET":
+        id = request.args.get("id")
+        comment = request.args.get("comment")
+        editForm = EditForm(request.args)
+    else:
         id = request.form["id"]
-        name = request.form["name"].lower()
-        path = f"{filedir}\\{editForm.path.data}".lower()
         comment = request.form["comment"]
+        editForm = EditForm(request.form)
+
+    # Проверка корректности формы
+    if editForm.validate():
+        name = editForm.name.data.lower()
+        path = f"{filedir}\\{editForm.path.data}".lower()
 
         # Нахождение нужного файла (по id)
         file = db.session.query(File).filter(File.id == id).first()
@@ -162,7 +189,8 @@ def editFile():
             db.session.commit()
             return jsonify({
                 "status": "ok",
-                "msg": "File is edited!"
+                "msg": "File is edited!",
+                "data": file.getData()
             })
         else:
             return jsonify({
@@ -172,61 +200,84 @@ def editFile():
     else:
         return jsonify({
             "status": "error",
-            "msg": "Incorrect form!"
+            "errors": editForm.errors
         })
 
-@api_bp.route("/delete", methods=['POST'])
+@api_bp.route("/delete", methods=['POST','GET'])
 def deleteFile():
     # Получение id из запроса
-    id = request.form["id"]
+    if request.method == "GET":
+        id = request.args.get("id")
+        idForm = IdForm(request.args)
+    else:
+        id = request.form.get("id")
+        idForm = IdForm(request.form)
 
-    # Нахождение нужного файла (по id)
-    file = db.session.query(File).filter(File.id == id).first()
-    if file == None:
-        return jsonify({
-            "status": "error",
-            "msg": "Wrong id!"
-        })
+    if idForm.validate():
+        # Нахождение нужного файла (по id)
+        file = db.session.query(File).filter(File.id == id).first()
+        if file == None:
+            return jsonify({
+                "status": "error",
+                "msg": "Wrong id!"
+            })
 
-    name = file.name.strip()
-    extension = file.extension.strip()
-    path = file.path.replace("\\\\","\\")
-    fullpath = f"{path+name}.{extension}"
-
-    # Удаление файла
-    os.remove(fullpath)
-    try:
-        os.removedirs(path)
-    except: pass
-    db.session.delete(file)
-    db.session.commit()
-    return jsonify({
-        "status": "ok",
-        "msg": "File is deleted!",
-        "data": file.getData()
-    })
-
-@api_bp.route("/download", methods=['POST'])
-def downloadFile():
-    # Получение id из запроса
-    id = request.form["id"]
-
-    # Нахождение нужного файла (по id)
-    file = db.session.query(File).filter(File.id == id).first()
-    if file:
         name = file.name.strip()
         extension = file.extension.strip()
         path = file.path.replace("\\\\","\\")
         fullpath = f"{path+name}.{extension}"
 
-        if not name: name = "file"
-
-        return flask.send_file(fullpath, as_attachment=True, download_name=f"{name}.{extension}")
+        # Удаление файла
+        os.remove(fullpath)
+        try:
+            os.removedirs(path)
+        except: pass
+        db.session.delete(file)
+        db.session.commit()
+        return jsonify({
+            "status": "ok",
+            "msg": "File is deleted!",
+            "data": file.getData()
+        })
     else:
         return jsonify({
             "status": "error",
-            "msg": "Wrong id!"
+            "errors": idForm.errors
         })
+
+@api_bp.route("/download", methods=['POST','GET'])
+def downloadFile():
+    # Получение id из запроса
+    if request.method == "GET":
+        id = request.args.get("id")
+        idForm = IdForm(request.args)
+    else:
+        id = request.form.get("id")
+        idForm = IdForm(request.form)
+
+    if idForm.validate():
+        # Нахождение нужного файла (по id)
+        file = db.session.query(File).filter(File.id == id).first()
+        if file:
+            name = file.name.strip()
+            extension = file.extension.strip()
+            path = file.path.replace("\\\\","\\")
+            fullpath = f"{path+name}.{extension}"
+
+            if not name: name = "file"
+
+            return flask.send_file(fullpath, as_attachment=True, download_name=f"{name}.{extension}")
+        else:
+            return jsonify({
+                "status": "error",
+                "msg": "Wrong id!"
+            })
+    else:
+        return jsonify({
+            "status": "error",
+            "errors": idForm.errors
+        })
+
 @api_bp.route("/sync")
 def sync():
     files = []
@@ -274,5 +325,3 @@ def sync():
         "status": "ok",
         "msg": "Sync is completed!"
     })
-
-
