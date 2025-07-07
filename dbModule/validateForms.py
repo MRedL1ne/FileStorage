@@ -1,10 +1,5 @@
 from wtforms import Form, IntegerField, StringField, validators
 
-class IdForm(Form):
-    id = IntegerField("Id", [validators.input_required(), validators.regexp(r"^\d+$")])
-    def filter_id(form, field):
-        return str(field)
-
 class PathForm(Form):
     path = StringField("Path", [validators.regexp(r"(^(\w+[\\])+)$|^$")])
     def filter_path(form, field):
@@ -18,9 +13,9 @@ class PathForm(Form):
 
         if (len(path) != 0) and (path[-1] != "\\"):
             path = path + "\\"
-        return path.strip().lower()
+        return path.strip()
 
-class EditForm(IdForm,PathForm):
+class EditForm(PathForm):
     name = StringField("Name", [validators.regexp(r'^[^\\\/:*?"<>|]+$'),
                                 validators.length(1,255),
                                 validators.input_required()])
@@ -29,4 +24,4 @@ class EditForm(IdForm,PathForm):
             return ""
 
         name = field.replace("'", "").replace('"', '')
-        return name.strip().lower()
+        return name.strip()

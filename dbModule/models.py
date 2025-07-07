@@ -13,7 +13,7 @@ class File(db.Model):
     updated_at = db.Column("updated_at", db.TIMESTAMP, nullable=True)
     comment = db.Column("comment", db.TEXT, nullable=True)
 
-    def __init__(self,name,ext,size,path,cr_at=datetime.now(),up_at=None,comment=""):
+    def __init__(self,name,ext,size,path,cr_at=datetime.now(),up_at=None,comment=None):
         self.name = name
         self.extension = ext
         self.size = size

@@ -25,65 +25,13 @@
             {% endfor %}
         </table>
     </div>
-
     <div>
-        <form action="http://127.0.0.1:5000/api/get" method="post">
-            <h2>Find the file:</h2>
-            <label>Id:<input type="number" name="id"></label>
-            <input type="submit" value="submit">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/getByPath" method="post">
-            <h2>Find the files by path:</h2>
-            <label>Path: files\<input type="text" name="path"></label>
-            <label>Allow files in subdirectories:<input type="checkbox" name="subcheck" value="True"></label>
-            <input type="submit" value="submit">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/getAll" method="get">
-            <h2>Get all files:</h2>
-            <input type="submit" value="Get!">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/add" method="POST" enctype="multipart/form-data">
+        <form action="http://127.0.0.1:5000/api/files" method="POST" enctype="multipart/form-data">
             <h2>Add the file:</h2>
             <input type="file" name="file">
             <label>Path: files\<input type="text" name="path"></label>
             <label>Comment:<input type="text" name="comment"></label>
-            <input type="submit">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/edit" method="post">
-            <h2>Edit the file:</h2>
-            <label>Id:<input type="number" name="id"></label>
-            <label>Name:<input type="text" name="name"></label>
-            <label>Path: files\<input type="text" name="path"></label>
-            <label>Comment:<input type="text" name="comment"></label>
-            <input type="submit" value="submit">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/delete" method="post">
-            <h2>Delete the file:</h2>
-            <label>Id:<input type="number" name="id"></label>
-            <input type="submit" value="submit">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/download" method="post">
-            <h2>Download the file:</h2>
-            <label>Id:<input type="number" name="id"></label>
-            <input type="submit" value="Download">
-        </form>
-    </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/sync" method="post">
-            <h2>Sync:</h2>
-            <input type="submit" value="Submit">
+            <input type="submit" value="Add">
         </form>
     </div>
 </body>
