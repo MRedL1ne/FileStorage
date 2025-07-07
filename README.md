@@ -4,7 +4,7 @@
 
 ____
 ## Описание запуска (Docker)
-____
+
 ### 1. Клонирование репозитория
     git clone https://github.com/MRedL1ne/FileStorage.git
 
@@ -24,7 +24,6 @@ ____
 
 ____
 ## Зависимости
-____
  * flask
  * flask_sqlalchemy
  * flask_migrate
@@ -35,7 +34,6 @@ ____
 ____
 ## Документация API 
 ____
-
 ### GET-Запросы:
 ____
 
