@@ -2,39 +2,37 @@
  Backend Web-приложения, управляющего файловым 
 хранилищем и базой данных, которая содержит информацию о каждом файле.
 
-## Описание запуска
-1. Клонирование репозитория 
-    ```
+____
+## Описание запуска (Docker)
+____
+### 1. Клонирование репозитория
     git clone https://github.com/MRedL1ne/FileStorage.git
-    ```
 
-2. Установка зависимостей
-    ```
-    pip3 install -r requirements.txt
-    ```
-
-3. Изменение файла .env для конфигурации БД
-    #### Пример файла:
-      ```
+### 2. Изменение файла `.env` для конфигурации БД
+#### Пример файла:
       POSTGRES_USER = postgres
       POSTGRES_PW = postgres
-      POSTGRES_URL = localhost:5432
+      POSTGRES_URL = host.docker.internal
+      POSTGRES_PORT = 5432
       POSTGRES_DB = fileStorage
-      ```
-4. Запуск приложения
-    ```
-    python3 app.py
-    ```
+   
+### 3. Создание образа
+      docker build -t filestorage-docker-app .
 
-    ## Зависимости
-    * flask
-    * flask_sqlalchemy
-    * flask_migrate
-    * psycopg2
-    * wtforms
-    * dotenv
+### 4. Запуск контейнера
+    docker run -p 5000:5000 filestorage-docker-app
+
+____
+## Зависимости
+____
+ * flask
+ * flask_sqlalchemy
+ * flask_migrate
+ * psycopg2
+ * wtforms
+ * dotenv
   
-      
+____
 ## Документация API 
 ____
 

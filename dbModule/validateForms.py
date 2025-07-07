@@ -1,19 +1,26 @@
+from os.path import altsep
 from wtforms import Form, IntegerField, StringField, validators
+import os
 
 class PathForm(Form):
-    path = StringField("Path", [validators.regexp(r"(^(\w+[\\])+)$|^$")])
+    path = StringField("Path", [validators.regexp(r"(^(\w+[\\\/])+)$|^$")])
     def filter_path(form, field):
         if not field:
             return ""
 
-        path = field.replace("'", "").replace('"', '').replace("/", "\\")
+        sep = os.path.sep
+        if sep=="/":
+            altsep="\\"
+        else:
+            altsep="/"
+        path = field.replace("'", "").replace('"', '').replace(altsep, sep)
 
-        if (len(path) != 0) and  (path[0] == "\\"):
+        if (len(path) != 0) and  (path[0] == sep):
             path = path[1::]
 
-        if (len(path) != 0) and (path[-1] != "\\"):
-            path = path + "\\"
-        return path.strip()
+        if (len(path) != 0) and (path[-1] != sep):
+            path = path + sep
+        return path.strip().lower()
 
 class EditForm(PathForm):
     name = StringField("Name", [validators.regexp(r'^[^\\\/:*?"<>|]+$'),
@@ -24,4 +31,4 @@ class EditForm(PathForm):
             return ""
 
         name = field.replace("'", "").replace('"', '')
-        return name.strip()
+        return name.strip().lower()

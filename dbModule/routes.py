@@ -35,14 +35,14 @@ def getByPathFiles():
 
     # Проверка корректности пути
     if pathForm.validate():
-        path = f"{filedir}\\{pathForm.path.data}".lower()
+        path = os.path.join(filedir,pathForm.path.data).lower()
 
         # Нахождение совпадений пути в БД
         if subcheck:
-            path = path.replace("\\", "\\\\")
+            if os.path.sep == "\\":
+                path = path.replace("\\", "\\\\")
             files = db.session.query(File).filter(File.path.startswith(path))
         else:
-            path = path.replace("\\\\", "\\")
             files = db.session.query(File).filter(File.path == path)
         files.all()
 
@@ -94,7 +94,7 @@ def addFile():
 
         file.seek(0, os.SEEK_END)
         size = file.tell()
-        path = f"{filedir}\\{pathForm.path.data}".lower()
+        path = os.path.join(filedir,pathForm.path.data)
         comment = request.form.get("comment")
         if not comment: comment = None
 
@@ -131,7 +131,7 @@ def editFile(id):
 
     if editForm.validate():
         name = editForm.name.data
-        path = f"{filedir}\\{editForm.path.data}".lower()
+        path = os.path.join(filedir,editForm.path.data)
         comment = request.form.get("comment")
 
         # Нахождение нужного файла (по id)
@@ -139,28 +139,36 @@ def editFile(id):
         if file:
             extension = file.extension.strip()
             oldName = file.name.strip()
-            oldPath = file.path.replace("\\\\", "\\")
+            oldPath = file.path
 
-            # Перемещение файла и обновление данных в БД
-            if not os.path.exists(path):
-                os.makedirs(path, mode=0o777, exist_ok=True)
-            shutil.move(f"{oldPath + oldName}.{extension}",f"{path + name}.{extension}")
+            # Проверка на существование индентичного файла по новой директории
+            fullpath = f"{path + name}.{extension}"
+            if (not os.path.exists(fullpath)) or (oldPath == path):
+                # Перемещение файла и обновление данных в БД
+                if not os.path.exists(path):
+                    os.makedirs(path, mode=0o777, exist_ok=True)
 
-            try:
-                os.removedirs(oldPath)
-            except: pass
+                shutil.move(f"{oldPath + oldName}.{extension}",f"{path + name}.{extension}")
+                try:
+                    os.removedirs(oldPath)
+                except: pass
 
-            file.name = name
-            file.path = path
-            file.comment = comment
-            file.updated_at = datetime.now()
+                file.name = name
+                file.path = path
+                file.comment = comment
+                file.updated_at = datetime.now()
 
-            db.session.commit()
-            return jsonify({
-                "status": "ok",
-                "msg": "File is edited!",
-                "data": file.getData()
-            })
+                db.session.commit()
+                return jsonify({
+                    "status": "ok",
+                    "msg": "File is edited!",
+                    "data": file.getData()
+                })
+            else:
+                return jsonify({
+                    "status": "error",
+                    "msg": "File already exists!"
+                })
         else:
             return jsonify({
                 "status": "error",
@@ -184,7 +192,7 @@ def deleteFile(id):
 
     name = file.name.strip()
     extension = file.extension.strip()
-    path = file.path.replace("\\\\","\\")
+    path = file.path
     fullpath = f"{path+name}.{extension}"
 
     # Удаление файла
@@ -207,7 +215,7 @@ def downloadFile(id):
     if file:
         name = file.name.strip()
         extension = file.extension.strip()
-        path = file.path.replace("\\\\","\\")
+        path = file.path
         fullpath = f"{path+name}.{extension}"
 
         if not name: name = "file"
@@ -226,7 +234,7 @@ def sync():
 
     # Обновление информации в БД по добавленным файлам
     for dirpath, dirname, filenames in os.walk(filedir):
-        path = f"{dirpath}\\".lower()
+        path = f"{dirpath + os.path.sep}".lower()
         for filename in filenames:
             name, extension = filename.rsplit(".",1)
 
