@@ -24,7 +24,7 @@ cd FileStorage
       docker build -t filestorage-docker-app .
 
 ### 5. Запуск контейнера
-    docker run -p 5000:5000 filestorage-docker-app
+    docker run -p 5000:5000 --name FileStorage filestorage-docker-app
 
 ## Зависимости
  * flask
