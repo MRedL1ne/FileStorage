@@ -2,13 +2,17 @@
  Backend Web-приложения, управляющего файловым 
 хранилищем и базой данных, которая содержит информацию о каждом файле.
 
-____
 ## Описание запуска (Docker)
-____
+
 ### 1. Клонирование репозитория
     git clone https://github.com/MRedL1ne/FileStorage.git
 
-### 2. Изменение файла `.env` для конфигурации БД
+### 2. Переход в директорию FileStorage
+```
+cd FileStorage
+```
+
+### 3. Изменение файла `.env` для конфигурации БД
 #### Пример файла:
       POSTGRES_USER = postgres
       POSTGRES_PW = postgres
@@ -16,15 +20,13 @@ ____
       POSTGRES_PORT = 5432
       POSTGRES_DB = fileStorage
    
-### 3. Создание образа
+### 4. Создание образа
       docker build -t filestorage-docker-app .
 
-### 4. Запуск контейнера
-    docker run -p 5000:5000 filestorage-docker-app
+### 5. Запуск контейнера
+    docker run -p 5000:5000 --name FileStorage filestorage-docker-app
 
-____
 ## Зависимости
-____
  * flask
  * flask_sqlalchemy
  * flask_migrate
@@ -32,10 +34,8 @@ ____
  * wtforms
  * dotenv
   
-____
 ## Документация API 
 ____
-
 ### GET-Запросы:
 ____
 
