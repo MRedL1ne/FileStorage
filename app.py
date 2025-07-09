@@ -3,7 +3,7 @@ from config import Config
 from dbModule import db,migrate
 from dbModule.routes import api_bp, getAllFiles
 
-def create_app():
+def createApp():
     app = Flask(__name__, template_folder="Templates")
     app.config.from_object(Config)
     app.json.sort_keys = False
@@ -20,12 +20,19 @@ def create_app():
         print(ex)
 
     @app.route("/")
-    def MainPage():
+    def mainPage():
         data = getAllFiles().json["data"]
         return render_template("base.html",data=data)
 
     return app
 
-app = create_app()
+app = createApp()
+
+# Функция для вызова синхронизации
+def runSync():
+    with app.app_context():
+        from dbModule.routes import sync
+        sync()
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

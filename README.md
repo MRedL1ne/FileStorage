@@ -14,17 +14,17 @@ cd FileStorage
 
 ### 3. Изменение файла `.env` для конфигурации БД
 #### Пример файла:
-      POSTGRES_USER = postgres
-      POSTGRES_PW = postgres
-      POSTGRES_URL = host.docker.internal
-      POSTGRES_PORT = 5432
-      POSTGRES_DB = fileStorage
+    POSTGRES_USER = postgres
+    POSTGRES_PW = postgres
+    POSTGRES_URL = host.docker.internal
+    POSTGRES_PORT = 5432
+    POSTGRES_DB = fileStorage
    
-### 4. Создание образа
-      docker build -t filestorage-docker-app .
+### 4. Создание образов
+    docker-compose build
 
 ### 5. Запуск контейнера
-    docker run -p 5000:5000 --name FileStorage filestorage-docker-app
+    docker-compose up 
 
 ## Зависимости
  * flask

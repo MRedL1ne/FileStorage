@@ -5,6 +5,4 @@ COPY . /app
 
 RUN apt-get update && apt-get install -y libpq-dev gcc python3-dev
 RUN pip install -r requirements.txt
-EXPOSE 5000  
-
-CMD [ "python3", "-m" , "app", "run", "--host=0.0.0.0"]
+EXPOSE 5000

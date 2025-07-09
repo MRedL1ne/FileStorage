@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./files:/app/files
+    command: python -m app run --host=0.0.0.0
+
+  sync:
+    build: .
+    environment:
+      - SYNC_INTERVAL=60
+    volumes:
+      - ./files:/app/files
+    command: bash -c "while true; do python -c 'from app import runSync; runSync()'; sleep $$SYNC_INTERVAL; done"
