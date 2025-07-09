@@ -1,4 +1,3 @@
-from os.path import altsep
 from wtforms import Form, IntegerField, StringField, validators
 import os
 

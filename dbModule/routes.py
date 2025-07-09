@@ -14,6 +14,7 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 def getFile(id):
     # Нахождение нужного файла (по id)
     file = (db.session.query(File).filter(File.id == id)).one_or_none()
+
     if file:
         return jsonify({
             "status": "ok",
@@ -41,12 +42,11 @@ def getByPathFiles():
         if subcheck:
             if os.path.sep == "\\":
                 path = path.replace("\\", "\\\\")
-            files = db.session.query(File).filter(File.path.startswith(path))
+            files = db.session.query(File).filter(File.path.startswith(path)).all()
         else:
-            files = db.session.query(File).filter(File.path == path)
-        files.all()
+            files = db.session.query(File).filter(File.path == path).all()
 
-        if not files.all():
+        if not files:
             return jsonify({
                 "status": "error",
                 "msg": "Files aren't found!"
@@ -68,6 +68,7 @@ def getByPathFiles():
 @api_bp.route("/files")
 def getAllFiles():
     files = db.session.query(File).all()
+
     lst = []
     for file in files:
         lst.append(file.getData())
@@ -106,8 +107,10 @@ def addFile():
             created_at = datetime.now()
             file.save(fullpath)
             newFile = File(name, extension, size, path, created_at, created_at, comment)
-            db.session.add(newFile)
-            db.session.commit()
+
+            with db.session.begin():
+                db.session.add(newFile)
+
             return jsonify({
                 "status": "ok",
                 "msg": "File is added!",
@@ -135,45 +138,47 @@ def editFile(id):
         comment = request.form.get("comment")
 
         # Нахождение нужного файла (по id)
-        file = db.session.query(File).filter(File.id == id).first()
-        if file:
-            extension = file.extension.strip()
-            oldName = file.name.strip()
-            oldPath = file.path
+        with db.session.begin():
+            file = db.session.query(File).filter(File.id == id).first()
 
-            # Проверка на существование индентичного файла по новой директории
-            fullpath = f"{path + name}.{extension}"
-            if (not os.path.exists(fullpath)) or (oldPath == path):
-                # Перемещение файла и обновление данных в БД
-                if not os.path.exists(path):
-                    os.makedirs(path, mode=0o777, exist_ok=True)
+            if file:
+                extension = file.extension.strip()
+                oldName = file.name.strip()
+                oldPath = file.path
 
-                shutil.move(f"{oldPath + oldName}.{extension}",f"{path + name}.{extension}")
-                try:
-                    os.removedirs(oldPath)
-                except: pass
+                # Проверка на существование индентичного файла по новой директории
+                fullpath = f"{path + name}.{extension}"
+                if (not os.path.exists(fullpath)) or (oldPath == path):
+                    # Перемещение файла
+                    if not os.path.exists(path):
+                        os.makedirs(path, mode=0o777, exist_ok=True)
 
-                file.name = name
-                file.path = path
-                file.comment = comment
-                file.updated_at = datetime.now()
+                    shutil.move(f"{oldPath + oldName}.{extension}",f"{path + name}.{extension}")
+                    try:
+                        os.removedirs(oldPath)
+                    except: pass
 
-                db.session.commit()
-                return jsonify({
-                    "status": "ok",
-                    "msg": "File is edited!",
-                    "data": file.getData()
-                })
+                    # Обновление данных в БД
+                    file.name = name
+                    file.path = path
+                    file.comment = comment
+                    file.updated_at = datetime.now()
+
+                    return jsonify({
+                        "status": "ok",
+                        "msg": "File is edited!",
+                        "data": file.getData()
+                    })
+                else:
+                    return jsonify({
+                        "status": "error",
+                        "msg": "File already exists!"
+                    })
             else:
                 return jsonify({
                     "status": "error",
-                    "msg": "File already exists!"
+                    "msg": "Wrong id!"
                 })
-        else:
-            return jsonify({
-                "status": "error",
-                "msg": "Wrong id!"
-            })
     else:
         return jsonify({
             "status": "error",
@@ -183,25 +188,28 @@ def editFile(id):
 @api_bp.route("/files/<int:id>", methods=['DELETE'])
 def deleteFile(id):
     # Нахождение нужного файла (по id)
-    file = db.session.query(File).filter(File.id == id).first()
-    if file == None:
-        return jsonify({
-            "status": "error",
-            "msg": "Wrong id!"
-        })
+    with db.session.begin():
+        file = db.session.query(File).filter(File.id == id).first()
+        if file == None:
+            return jsonify({
+                "status": "error",
+                "msg": "Wrong id!"
+            })
 
-    name = file.name.strip()
-    extension = file.extension.strip()
-    path = file.path
-    fullpath = f"{path+name}.{extension}"
+        name = file.name.strip()
+        extension = file.extension.strip()
+        path = file.path
+        fullpath = f"{path+name}.{extension}"
 
-    # Удаление файла
-    os.remove(fullpath)
-    try:
-        os.removedirs(path)
-    except: pass
-    db.session.delete(file)
-    db.session.commit()
+        # Удаление файла из хранилища
+        os.remove(fullpath)
+        try:
+            os.removedirs(path)
+        except: pass
+
+        # Удаление файла из БД
+        db.session.delete(file)
+
     return jsonify({
         "status": "ok",
         "msg": "File is deleted!",
@@ -212,6 +220,7 @@ def deleteFile(id):
 def downloadFile(id):
     # Нахождение нужного файла (по id)
     file = db.session.query(File).filter(File.id == id).first()
+
     if file:
         name = file.name.strip()
         extension = file.extension.strip()
@@ -229,42 +238,42 @@ def downloadFile(id):
 
 @api_bp.route("files/sync")
 def sync():
-    files = []
-    filesDB = db.session.query(File).all()
+    with db.session.begin():
+        files = []
+        filesDB = db.session.query(File).all()
 
-    # Обновление информации в БД по добавленным файлам
-    for dirpath, dirname, filenames in os.walk(filedir):
-        path = f"{dirpath + os.path.sep}".lower()
-        for filename in filenames:
-            name, extension = filename.rsplit(".",1)
+        # Обновление информации в БД по добавленным файлам
+        for dirpath, dirname, filenames in os.walk(filedir):
+            path = f"{dirpath + os.path.sep}".lower()
+            for filename in filenames:
+                name, extension = filename.rsplit(".",1)
 
-            files.append((path,name,extension))
+                files.append((path,name,extension))
 
-            fullpath = f"{path+name}.{extension}"
-            size = os.path.getsize(fullpath)
-            created_at = datetime.fromtimestamp(os.path.getctime(fullpath))
-            updated_at = datetime.fromtimestamp(os.path.getmtime(fullpath))
+                fullpath = f"{path+name}.{extension}"
+                size = os.path.getsize(fullpath)
+                created_at = datetime.fromtimestamp(os.path.getctime(fullpath))
+                updated_at = datetime.fromtimestamp(os.path.getmtime(fullpath))
 
-            file = (db.session.query(File).filter(File.path == path)
-                     .filter(File.name == name)
-                     .filter(File.extension == extension).first())
+                file = (db.session.query(File).filter(File.path == path)
+                         .filter(File.name == name)
+                         .filter(File.extension == extension).first())
 
-            if not file:
-                newFile = File(name,extension,size,path,created_at,updated_at,None)
-                db.session.add(newFile)
-            else:
-                file.size, file.created_at, file.updated_at = size, created_at, updated_at
+                if not file:
+                    newFile = File(name,extension,size,path,created_at,updated_at,None)
+                    db.session.add(newFile)
+                else:
+                    file.size, file.created_at, file.updated_at = size, created_at, updated_at
 
-    #Обновление информации в БД по удаленным файлам
-    for file in filesDB:
-        tpl = (file.path,file.name.strip(),file.extension.strip())
-        if tpl not in files:
-            try:
-                os.removedirs(file.path)
-            except: pass
-            db.session.delete(file)
+        #Обновление информации в БД по удаленным файлам
+        for file in filesDB:
+            tpl = (file.path,file.name.strip(),file.extension.strip())
+            if tpl not in files:
+                try:
+                    os.removedirs(file.path)
+                except: pass
+                db.session.delete(file)
 
-    db.session.commit()
     return jsonify({
         "status": "ok",
         "msg": "Sync is completed!"

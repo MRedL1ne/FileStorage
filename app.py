@@ -1,4 +1,3 @@
-import os
 from flask import Flask, render_template
 from config import Config
 from dbModule import db,migrate
