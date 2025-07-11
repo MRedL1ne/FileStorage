@@ -78,48 +78,52 @@ def getAllFiles():
     })
 
 @api_bp.route("/files", methods=['POST'])
-def addFile():
+def addFiles():
     # Проверка корректности пути
     pathForm = PathForm(request.form)
     if pathForm.validate():
         # Получение данных из запроса
-        file = request.files["file"]
-        filename = file.filename.lower()
-
-        name, extension = filename.rsplit(".",1)
-        if not name or not extension:
-            return jsonify({
-                "status": "error",
-                "msg": "Unsupported filename!"
-            })
-
-        file.seek(0, os.SEEK_END)
-        size = file.tell()
-        path = os.path.join(filedir,pathForm.path.data)
+        path = os.path.join(filedir, pathForm.path.data)
         comment = request.form.get("comment")
         if not comment: comment = None
 
-        fullpath = f"{path+name}.{extension}"
-        os.makedirs(path, mode=0o777, exist_ok=True)
+        files = request.files.getlist("files")
+        filesData = []
+        with db.session.begin():
+            for file in files:
+                filename = file.filename.lower()
 
-        file.seek(0)
-        if not os.path.exists(fullpath):
-            created_at = datetime.now()
-            file.save(fullpath)
-            newFile = File(name, extension, size, path, created_at, created_at, comment)
+                name, extension = filename.rsplit(".",1)
+                if not name or not extension:
+                    return jsonify({
+                        "status": "error",
+                        "msg": "Unsupported filename!"
+                    })
 
-            with db.session.begin():
-                db.session.add(newFile)
+                file.seek(0, os.SEEK_END)
+                size = file.tell()
 
+                fullpath = f"{path+name}.{extension}"
+                os.makedirs(path, mode=0o777, exist_ok=True)
+
+                file.seek(0)
+                if not os.path.exists(fullpath):
+                    created_at = datetime.now()
+                    file.save(fullpath)
+                    newFile = File(name, extension, size, path, created_at, created_at, comment)
+                    filesData.append(newFile.getData())
+
+                    db.session.add(newFile)
+
+                else:
+                    return jsonify({
+                        "status": "error",
+                        "msg": f"File [{filename}] already exists!"
+                    })
             return jsonify({
                 "status": "ok",
-                "msg": "File is added!",
-                "data": newFile.getData()
-            })
-        else:
-            return jsonify({
-                "status": "error",
-                "msg": "File already exists!"
+                "msg": "Files are added!",
+                "data": filesData
             })
     else:
         return jsonify({

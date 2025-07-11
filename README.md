@@ -82,19 +82,19 @@ ____
 Пример формы:
 ```
 <form action="http://127.0.0.1:5000/api/files" method="POST" enctype="multipart/form-data">
-   <h2>Add the file:</h2>
-      <input type="file" name="file">
-      <label>Path: files\<input type="text" name="path"></label>
-      <label>Comment:<input type="text" name="comment"></label>
-   <input type="submit" value="Add">
+    <h2>Add the file:</h2>
+        <input type="file" name="files" multiple>
+        <label>Path: files\<input type="text" name="path"></label>
+        <label>Comment:<input type="text" name="comment"></label>
+    <input type="submit" value="Add">
 </form>
 ```
 * file - файл, который будет загружен в файловое хранилище
 * path - путь, где создастся файл
 * comment [опционально] - комментарий, который будет храниться в БД
 
-Загрузка нового файла в файловое хранилище и создание записи в базе 
-данных, соответствующей этому файлу
+Загрузка новых файлов в файловое хранилище и создание записей в базе 
+данных, соответствующих этим файлам
 ____
 
 ____
