@@ -21,8 +21,8 @@ def createApp():
 
     @app.route("/")
     def mainPage():
-        data = getAllFiles().json["data"]
-        return render_template("base.html",data=data)
+        #data = getAllFiles().json["data"]
+        return render_template("base.html")
 
     return app
 

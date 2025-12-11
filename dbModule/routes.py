@@ -282,3 +282,39 @@ def sync():
         "status": "ok",
         "msg": "Sync is completed!"
     })
+
+@api_bp.route("/contents", methods=["GET"])
+def get_contents():
+    rel = request.args.get("path", "").strip().replace("/", "\\")
+    rel = rel.strip("\\")
+
+    abs_path = os.path.join(filedir, rel)
+
+    norm_abs = os.path.abspath(abs_path)
+    norm_abs = norm_abs.rstrip("\\") + "\\"
+    norm_abs = norm_abs.lower()
+
+    if not os.path.isdir(norm_abs):
+        return jsonify({"status": "error", "msg": "Directory does not exist"})
+
+    # Получаем директории
+    directories = []
+    for entry in os.listdir(norm_abs):
+        if os.path.isdir(os.path.join(norm_abs, entry)):
+            directories.append(entry)
+
+    # Получаем файлы
+    db_files = (
+        db.session.query(File)
+        .filter(db.func.lower(File.path) == norm_abs)
+        .all()
+    )
+
+    files = [f.getData() for f in db_files]
+
+    return jsonify({
+        "status": "ok",
+        "directories": directories,
+        "files": files
+    })
+

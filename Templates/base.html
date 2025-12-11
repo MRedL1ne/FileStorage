@@ -1,38 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Flask App</title>
+<meta charset="utf-8" />
+<title>Файловое Хранилище</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Welcome to Flask</h1>
-    <p>This is a basic template rendering example.</p>
 
-    <div>
-        <h2>Files:</h2>
-        <table>
-            <thead></thead>
-            {% for item in data %}
-                <tr>
-                    <td>{{item["id"]}}</td>
-                    <td>{{item["name"]}}</td>
-                    <td>{{item["extension"]}}</td>
-                    <td>{{item["size"]}}</td>
-                    <td>{{item["path"]}}</td>
-                    <td>{{item["created_at"]}}</td>
-                    <td>{{item["updated_at"]}}</td>
-                    <td>{{item["comment"]}}</td>
-                </tr>
-            {% endfor %}
-        </table>
+<h1>Файловое Хранилище</h1>
+
+<div id="header">
+  <button id="backBtn" class="control-btn" onclick="goBack()">⬅ Назад</button>
+  <button id="addBtn" class="control-btn" title="Добавить файл" onclick="openAddModal()">➕</button>
+  <div id="pathDisplay">/</div>
+  <button id="themeToggle" class="control-btn" title="Сменить тему">🌓</button>
+</div>
+
+<table id="container" aria-label="Содержимое каталога">
+  <thead>
+    <tr>
+      <th style="width:340px">Имя</th>
+      <th style="width:90px">Тип</th>
+      <th style="width:110px">Размер</th>
+      <th style="min-width:200px">Комментарий</th>
+      <th style="width:170px">Создан</th>
+      <th style="width:170px">Обновлён</th>
+      <th style="width:140px">Действия</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<div id="addModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <h3 style="margin:0">Добавить файл</h3>
+    <div class="modal-row">
+      <input id="addFileInput" type="file">
     </div>
-    <div>
-        <form action="http://127.0.0.1:5000/api/files" method="POST" enctype="multipart/form-data">
-            <h2>Add the file:</h2>
-            <input type="file" name="files" multiple>
-            <label>Path: files\<input type="text" name="path"></label>
-            <label>Comment:<input type="text" name="comment"></label>
-            <input type="submit" value="Add">
-        </form>
+    <div class="modal-row">
+      <label>Путь</label>
+      <input id="addPath" type="text" placeholder="/" />
     </div>
+    <div class="modal-row">
+      <label>Комментарий</label>
+      <input id="addComment" type="text" placeholder="Комментарий" />
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeAddModal()">Отмена</button>
+      <button id="addConfirmBtn" onclick="confirmAddFile()">Загрузить</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <h3 style="margin:0">Редактировать файл</h3>
+    <div class="modal-row">
+      <label>Имя (без расширения)</label>
+      <input id="editName" type="text" />
+    </div>
+    <div class="modal-row">
+      <label>Путь</label>
+      <input id="editPath" type="text" />
+    </div>
+    <div class="modal-row">
+      <label>Комментарий</label>
+      <input id="editComment" type="text" />
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeEditModal()">Отмена</button>
+      <button id="editConfirmBtn" onclick="confirmEditFile()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<footer>Курсовой проект, 2025</footer>
 </body>
 </html>
