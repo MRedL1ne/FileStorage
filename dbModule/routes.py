@@ -285,13 +285,16 @@ def sync():
 
 @api_bp.route("/contents", methods=["GET"])
 def get_contents():
-    rel = request.args.get("path", "").strip().replace("/", "\\")
-    rel = rel.strip("\\")
+    pathForm = PathForm(request.args)
+    if pathForm.validate():
+        path = os.path.join(filedir,pathForm.path.data).lower()
 
-    abs_path = os.path.join(filedir, rel)
 
-    norm_abs = os.path.abspath(abs_path)
-    norm_abs = norm_abs.rstrip("\\") + "\\"
+    norm_abs = os.path.abspath(path)
+    if os.path.sep == "\\":
+        norm_abs = norm_abs.rstrip("\\") + "\\"
+    else:
+        norm_abs = norm_abs.rstrip("/") + "/"
     norm_abs = norm_abs.lower()
 
     if not os.path.isdir(norm_abs):
